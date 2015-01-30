@@ -1,0 +1,4 @@
+[2015-01-30 18:46:06] [index->index] query sql: UPDATE user SET password='77963b7a931377ad4ab5ad6a9cd718aa' WHERE id=:id
+[2015-01-30 18:46:06] [index->index] query error[]: 
+[2015-01-30 18:46:19] [index->index] query sql: UPDATE user SET password='77963b7a931377ad4ab5ad6a9cd718aa' WHERE id=:id
+[2015-01-30 18:46:19] [index->index] query error[]: 
