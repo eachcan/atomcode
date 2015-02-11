@@ -1,19 +1,17 @@
 <?php
-define('APP_PATH', realpath("../app"));
-//define('WWW_PATH', __DIR__);
-//define('CURRENT_TIME', time());
+define('WWW_PATH', __DIR__);
+define('APP_PATH', realpath(__DIR__ . "/../app"));
+define('CURRENT_TIME', time());
 if (file_exists(WWW_PATH . '/../../.dev')) {
-	//define('ENVIRONMENT', 'development');
+	define('ENVIRONMENT', 'development');
 } elseif (file_exists(WWW_PATH . '/../../.test')) {
-	//define('ENVIRONMENT', 'testing');
+	define('ENVIRONMENT', 'testing');
 } else {
-	//define('ENVIRONMENT', 'production');
+	define('ENVIRONMENT', 'production');
 }
-define('ENVIRONMENT', 'development');
 
-include '../atomcode/core.php';
+chdir(WWW_PATH);
 
-AtomCode::addConfig("database");
-AtomCode::registerAutoloadDir(APP_PATH . '/library');
+include './../atomcode/core.php';
 
 AtomCode::start();

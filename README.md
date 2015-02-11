@@ -26,3 +26,19 @@ app 目录结构：
 		|- controller
 		|- model
 		|- view
+
+
+### 快速体验
+
+我们把三个目录放好，把web服务器目录指向到public目录。然后开始写一个 controller
+
+		<?php
+		class IndexController extends Controller {
+			public function indexAction() {
+				echo "hello world";
+			}
+		}
+
+OK, 开始访问吧：
+
+http://example.com/index.php?_url=index/index
