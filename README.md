@@ -11,18 +11,18 @@ Atomcode PHP 开发框架
 
 总共需要有三套目录： 框架的目录， 你自己的程序目录，你的入口文件和图片之前Web资源目录。分别如下：
 
-  | atomcode
-
-  | app         # 这个名字无所谓
-
-  | public	# 这个名字更无所谓，但是 Web 服务器一定要访问到
+		| atomcode
+		
+		| app         # 这个名字无所谓
+		
+		| public	# 这个名字更无所谓，但是 Web 服务器一定要访问到
 
 atomcode 目录你不需要关心，只需要找个地方放就行了。
 
 app 目录结构：
 
-  |- config
-    |- config.php
-  |- controller
-  |- model
-  |- view
+		|- config
+		  |- config.php
+		|- controller
+		|- model
+		|- view
