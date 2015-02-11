@@ -38,4 +38,20 @@ abstract class Controller {
 	public function isDisabledRender() {
 		return $this->__disable_render;
 	}
+	
+	public function requireRoute($route) {
+		if ($route == "cli" && !class_exists("RouteCli", false)) {
+			exit("Command Line Required");
+		} elseif ($route == "url" && !class_exists("RouteUrl", false)) {
+			exit("Access From Web Browswer is Required");
+		}
+	}
+	
+	public function requireCli() {
+		return $this->requireRoute('cli');
+	}
+	
+	public function requireUrl() {
+		return $this->requireRoute('url');
+	}
 }

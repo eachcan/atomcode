@@ -20,12 +20,21 @@ abstract class Renderer {
 class RenderHtml extends Renderer {
 	public function render($_____________________view, $data) {
 		extract($data);
-		include AtomCode::$config['view']['dir'] . DIRECTORY_SEPARATOR . $_____________________view . AtomCode::$config['view']['ext'];
+		$file = AtomCode::$config['view']['dir'] . DIRECTORY_SEPARATOR . $_____________________view . AtomCode::$config['view']['ext'];
+		if (file_exists($file)) {
+			include $file;
+		}
 	}
 }
 
 class RenderJson extends Renderer {
 	public function render($_____________________view, $data) {
 		echo Json::encode($data);
+	}
+}
+
+class RenderYaml extends Renderer {
+	public function render($_____________________view, $data) {
+		spyc_dump($data);
 	}
 }

@@ -13,6 +13,7 @@ define('ENVIRONMENT', 'development');
 
 include '../atomcode/core.php';
 
+AtomCode::addConfig("database");
 AtomCode::registerAutoloadDir(APP_PATH . '/library');
 
 AtomCode::start();

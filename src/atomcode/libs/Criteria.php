@@ -7,7 +7,6 @@ class Criteria {
 	public $insertUpdate = '';
 	public $having = '';
 	public $binding = array();
-	public $data = array();
 	public $groupBy = '';
 	public $insertSelect = '';
 	public $join = '';

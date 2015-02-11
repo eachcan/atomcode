@@ -22,7 +22,7 @@ function rhtmlspecialchars($string) {
 }
 function log_err($msg = '') {
 	if (AtomCode::$config['log']) {
-		file_put_contents(AtomCode::$config['logdir'] . '/' . date("Y-m-d") . '.log', '[' . date("Y-m-d H:i:s") . '] [' . Route::getModuleDir() . Route::getController() . '->' . Route::getAction() . "] " . $msg . "\r\n", FILE_APPEND);
+		file_put_contents(AtomCode::$config['logdir'] . '/' . date("Y-m-d") . '.log', '[' . date("Y-m-d H:i:s") . '] [' . AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . '->' . AtomCode::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
 	}
 }
 
@@ -88,4 +88,12 @@ function rrmdir($dir) {
 
 function is_ajax() {
 	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+}
+
+function is_post() {
+	return strtolower($_SERVER['REQUEST_METHOD']) == 'post';
+}
+
+function is_get() {
+	return strtolower($_SERVER['REQUEST_METHOD']) == 'get';
 }
