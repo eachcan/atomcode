@@ -2,7 +2,7 @@
 class View {
 	public static function render($render, $view, $data) {
 		$t = null;
-		$class = "Render" . ucfirst($render);
+		$class = ucfirst($render) . "Render";
 		if (class_exists($class)) {
 			$t = new $class;
 		}
@@ -17,7 +17,7 @@ abstract class Renderer {
 	public abstract function render($_____________________view, $data);	
 }
 
-class RenderHtml extends Renderer {
+class HtmlRender extends Renderer {
 	public function render($_____________________view, $data) {
 		extract($data);
 		$file = AtomCode::$config['view']['dir'] . DIRECTORY_SEPARATOR . $_____________________view . AtomCode::$config['view']['ext'];
@@ -27,13 +27,13 @@ class RenderHtml extends Renderer {
 	}
 }
 
-class RenderJson extends Renderer {
+class JsonRender extends Renderer {
 	public function render($_____________________view, $data) {
 		echo Json::encode($data);
 	}
 }
 
-class RenderYaml extends Renderer {
+class YamlRender extends Renderer {
 	public function render($_____________________view, $data) {
 		spyc_dump($data);
 	}
