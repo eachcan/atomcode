@@ -35,6 +35,6 @@ class JsonRender extends Renderer {
 
 class YamlRender extends Renderer {
 	public function render($_____________________view, $data) {
-		spyc_dump($data);
+		echo spyc_dump($data);
 	}
 }
