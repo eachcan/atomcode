@@ -5,7 +5,7 @@ class Criteria {
 	public $where = array();
 	public $order = '';
 	public $insertUpdate = '';
-	public $having = '';
+	public $having = array();
 	public $binding = array();
 	public $groupBy = '';
 	public $insertSelect = '';

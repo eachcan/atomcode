@@ -8,6 +8,9 @@ class AtomCode {
 	public static $config = array();
 	public static $session;
 	public static $auto_load_config = array();
+	/**
+	 * @var Route
+	 */
 	public static $route;
 	
 	public static function start() {
@@ -31,8 +34,10 @@ class AtomCode {
 		self::registerAutoloadDir(SYS_PATH . DIRECTORY_SEPARATOR . 'libs');
 		self::registerAutoload();
 		
-		self::$session = new Session();
-		self::assocSession();
+		if (AtomCode::$config['session']['mode'] == 'db') {
+			self::$session = new Session();
+			self::assocSession();
+		}
 		
 		if (defined('STDIN')) {
 			AtomCode::$route = new RouteCli();
@@ -136,6 +141,8 @@ class AtomCode {
 }
 
 function __atomcode_autoload($class) {
+	$class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+	
 	if (substr($class, -5) == 'Model') {
 		include APP_PATH . '/model/' . $class . '.php';
 	} else {
@@ -148,6 +155,7 @@ abstract class Route {
 	protected $module = "";
 	protected $controller = "";
 	protected $action = "";
+	protected $path = "";
 
 
 	public function __construct() {
@@ -160,6 +168,7 @@ abstract class Route {
 	
 	protected function parsePath($path) {
 		$path = trim($path, ' /');
+		$this->path = $path;
 		$ps = explode('/', $path);
 		if (count($ps) >= 2) {
 			$this->action = array_pop($ps);
@@ -202,5 +211,9 @@ abstract class Route {
 	
 	public function setAction($ac) {
 		$this->action = $ac;
+	}
+	
+	public function getPath() {
+		return $this->path;
 	}
 }

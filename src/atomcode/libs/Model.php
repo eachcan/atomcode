@@ -59,7 +59,7 @@ abstract class Model implements ArrayAccess {
 		$this->_criteria = $_table;
 	}
 	
-	public function where($where, $bind = array()) {
+	public function where($where, $binding = array()) {
 		if (is_array($where)) {
 			foreach ($where as $col => $val) {
 				$this->where("$col = :$col");
@@ -69,8 +69,8 @@ abstract class Model implements ArrayAccess {
 		} else {
 			$this->_criteria->where[] = $where;
 			
-			if ($bind) {
-				$this->bind($bind);
+			if ($binding) {
+				$this->bind($binding);
 			}
 		}
 	}
@@ -79,8 +79,9 @@ abstract class Model implements ArrayAccess {
 		$this->_criteria->order = $order;
 	}
 	
-	public function having($having) {
-		$this->_criteria->having = $having;
+	public function having($having, $binding = array()) {
+		$this->bind($binding);
+		$this->_criteria->having[] = $having;
 	}
 	
 	public function groupBy($group) {
@@ -202,6 +203,11 @@ abstract class Model implements ArrayAccess {
 	
 	public function delete($binding = array()) {
 		$this->bind($binding);
+		
+		if ($this->{$this->_primary}) {
+			$this->where("{$this->_primary}=:primary_key", array('primary_key' => $this->{$this->_primary}));
+		}
+		
 		$this->_last_query = $this->buildDeleteSql();
 		$result = $this->_db->query($this->_last_query, $this->_criteria->binding);
 
@@ -212,6 +218,10 @@ abstract class Model implements ArrayAccess {
 	public function save() {
 		$data = $this->value();
 		$this->data($data);
+		
+		if ($this->{$this->_primary}) {
+			$this->where("{$this->_primary}=:primary_key", array('primary_key' => $this->{$this->_primary}));
+		}
 		
 		return !!$this->insertUpdate($data);
 	}
@@ -284,7 +294,12 @@ abstract class Model implements ArrayAccess {
 	
 	private function partWhereSql() {
 		if ($this->_criteria->where) {
-			return ' WHERE ' . implode(' AND ', $this->_criteria->where);
+			if (count($this->_criteria->where) > 1) {
+				return ' WHERE (' . implode(') AND (', $this->_criteria->where) . ')';
+			} else {
+				return ' WHERE ' . implode(' AND ', $this->_criteria->where);
+			}
+			
 		} else {
 			return '';
 		}
@@ -300,7 +315,11 @@ abstract class Model implements ArrayAccess {
 	
 	private function partHavingSql() {
 		if ($this->_criteria->having) {
-			return ' HAVING ' . $this->_criteria->having;
+			if (count($this->_criteria->having) > 1) {
+				return ' HAVING (' . implode(') AND (', $this->_criteria->having) . ')';
+			} else {
+				return ' HAVING ' . implode(' AND ', $this->_criteria->having);
+			}
 		} else {
 			return '';
 		}

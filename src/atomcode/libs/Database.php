@@ -13,6 +13,9 @@ class Database {
 	
 	private static $instances = array();
 	private $messages = array();
+	
+	private $log_sql = false;
+	
 	/**
 	 * 
 	 * @param string $specify_db
@@ -29,7 +32,7 @@ class Database {
 	
 	public function __construct($specify_db, $config) {
 		$dsn = "mysql:host=$config[hostname];dbname=$config[database];port=$config[port];charset=$config[char_set]";
-		
+		$this->log_sql = isset($config['log']) && $config['log'];
 		try {
 			self::$links[$specify_db] = new PDO($dsn, $config['username'], $config['password']);
 			$this->link = &self::$links[$specify_db];
@@ -68,8 +71,12 @@ class Database {
 			$stmt = $this->bind($stmt, $binding);
 		}
 		
-		if (!$stmt->execute()) {
+		if ($this->log_sql) {
 			log_err("query sql: " . $stmt->queryString);
+		}
+		
+		if (!$stmt->execute()) {
+			log_err("fail sql: " . $stmt->queryString);
 			$error = $stmt->errorInfo();
 			$this->messages[] = "query error: " . print_r($error, true);
 			log_err("query error: " . print_r($error, true));
