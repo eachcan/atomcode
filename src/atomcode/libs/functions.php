@@ -97,3 +97,7 @@ function is_post() {
 function is_get() {
 	return strtolower($_SERVER['REQUEST_METHOD']) == 'get';
 }
+
+function is_https() {
+	return $_SERVER['SERVER_PORT'] == 443;
+}

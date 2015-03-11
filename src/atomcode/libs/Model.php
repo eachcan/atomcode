@@ -159,10 +159,10 @@ abstract class Model implements ArrayAccess {
 	public function insertSelect($insertSelect) {
 		$this->_criteria->insertSelect = $insertSelect;
 	}
+	
 	/**
-	 * @todo impl
-	 * @param unknown $array
-	 * @return Ambigous <boolean, PDOStatement>
+	 * @param array $array
+	 * @return boolean
 	 */
 	public function insertBatch($array) {
 		$this->_last_query = $this->buildInsertBatchSql($array);
@@ -232,8 +232,20 @@ abstract class Model implements ArrayAccess {
 		if (is_array($key)) {
 			$this->_criteria->binding = array_merge($this->_criteria->binding, $key);
 		} else {
+			if (is_array($value)) {
+				$value = $this->_getValueArray($value);
+			}
+			
 			$this->_criteria->binding[$key] = $value;
 		}
+	}
+	
+	/**
+	 * 
+	 * @param array $arr
+	 */
+	private function _getValueArray($arr) {
+		return implode(", ", $this->quote($arr));
 	}
 	
 	public function query($sql, $binding = array()) {
@@ -255,6 +267,10 @@ abstract class Model implements ArrayAccess {
 		return $this->buildInsertSql($this->value()) . ' ON DUPLICATE KEY UPDATE ' . $this->partUpdateSql($data);
 	}
 	
+	public function buildInsertBatchUpdateSql($array, $data) {
+		return $this->buildInsertBatchSql($array) . ' ON DUPLICATE KEY UPDATE ' . $this->partUpdateSql($data);
+	}
+	
 	public function buildInsertSql($data, $ignore = false) {
 		foreach ($data as $k => $v) {
 			if (is_null($v)) {
@@ -264,6 +280,38 @@ abstract class Model implements ArrayAccess {
 		$cols = array_keys($data);
 		
 		return 'INSERT' . ($ignore ? ' IGNORE' : '') . ' INTO ' . $this->getUsingTable() . ' (' . implode(', ', $cols) . ') VALUES (' . implode(', ', $this->quote($data)) . ')';
+	}
+	
+	public function buildInsertBatchSql($array, $ignore = false) {
+		if (!count($array)) {
+			throw new Exception("nothing to be inserted!");
+		}
+
+		$values = array();
+		// build data array according to the first element.
+		// so, we detect the first element's values
+		$cols = array();
+		$col_in_key = array();
+		foreach ($array[0] as $k => $v) {
+			if (is_null($v)) {
+				unset($array[0][$k]);
+			}
+			
+			$cols[] = $k;
+		}
+		
+		// now we apply a filter for strip uneffective keys in the array 
+		foreach ($array as $data) {
+			$data2 = array();
+			foreach ($cols as $k) {
+				$data2[$k] = $data[$k];
+			}
+			
+			$values[] = '(' . implode(', ', $this->quote($data2)) . ')';
+		}
+		
+		return 'INSERT' . ($ignore ? ' IGNORE' : '') . ' INTO ' . $this->getUsingTable() . ' (' . implode(', ', $cols) . ') VALUES ' . implode(", ", $values);
+		
 	}
 	
 	public function buildUpdateSql($data) {
