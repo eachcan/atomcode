@@ -53,6 +53,16 @@ class Database {
 	 * @return PDOStatement
 	 */
 	public function bind($sql, $binding) {
+		$this->_binding = &$binding;
+		$sql = preg_replace_callback("/::(\\w+)/", array($this, 'repl_origen'), $sql);
+		
+// 		foreach ($binding as $k => $_) {
+// 			if ($k{0} == ':') {
+// 				$sql = str_replace(":$k", $_, $sql);
+// 				unset($binding[$k]);
+// 			}
+// 		}
+		
 		$stmt = $this->link->prepare($sql);
 		
 		foreach ($binding as $k => $_) {
@@ -60,6 +70,18 @@ class Database {
 		}
 		
 		return $stmt;
+	}
+	
+	private function repl_origen($matches) {
+		if (!isset($this->_binding[$matches[1]])) {
+			$this->messages[] = "binding value to param fail, $matches[1] has not been set.";
+			return "";
+		}
+		
+		$val = $this->_binding[$matches[1]];
+		unset($this->_binding[$matches[1]]);
+		
+		return $val;
 	}
 	
 	/**

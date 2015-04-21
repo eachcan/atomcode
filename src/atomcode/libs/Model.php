@@ -20,7 +20,16 @@ abstract class Model implements ArrayAccess {
 		$this->_table = $this->getTableName();
 		$this->_config = & AtomCode::$config['db'][$this->_database];
 		$this->_db = & Database::get($this->_database);
+		
 		$this->reset();
+	}
+	
+	public function getCriteria() {
+		return clone $this->_criteria;
+	}
+	
+	public function setCriteria($criteria) {
+		$this->_criteria = clone $criteria;
 	}
 
 	public function offsetSet($offset, $value) {
@@ -40,6 +49,14 @@ abstract class Model implements ArrayAccess {
 		return isset($this->$offset) ? $this->$offset : null;
 	}
 	
+	public function __set($name, $value) {
+		if ($name{0} != "_") {
+			return ;
+		}
+		
+		$this->{$name} = $value;
+	}
+	
 	public function getTableName(){
 		$class = get_class($this);
 		$name = substr($class, 0, -5);
@@ -55,8 +72,12 @@ abstract class Model implements ArrayAccess {
 		$this->_criteria->select = $columns;
 	}
 	
-	public function from($_table) {
-		$this->_criteria = $_table;
+	public function from($table) {
+		$this->_criteria->from = $table;
+	}
+	
+	public function alias($name) {
+		$this->_criteria->from = $this->getUsingTable() . ' AS ' . $name;
 	}
 	
 	public function where($where, $binding = array()) {
@@ -67,8 +88,15 @@ abstract class Model implements ArrayAccess {
 			
 			$this->bind($where);
 		} else {
-			$this->_criteria->where[] = $where;
+			if (!is_array($binding) && !is_null($binding) && preg_match("/^[\\w\\.`]+$/", $where)) {
+				$param = "param_" . ($this->_criteria->counter ++);
+				$binding2[$param] = $binding;
+				$binding = $binding2;
+				
+				$where .= " = :" . $param;
+			}
 			
+			$this->_criteria->where[] = $where;
 			if ($binding) {
 				$this->bind($binding);
 			}
@@ -94,7 +122,7 @@ abstract class Model implements ArrayAccess {
 	
 	public function data($key, $val = false) {
 		if (is_array($key)) {
-			$this->flat($key);
+			$this->inflat($key);
 		} else {
 			if ($key{0} != '_' && property_exists($this, $key)) {
 				$this->{$key} = $val;
@@ -102,7 +130,7 @@ abstract class Model implements ArrayAccess {
 		}
 	}
 	
-	public function flat($values) {
+	public function inflat($values) {
 		foreach ($values as $k => $v) {
 			if ($k{0} != '_' && property_exists($this, $k)) {
 				$this->{$k} = $v;
@@ -112,7 +140,7 @@ abstract class Model implements ArrayAccess {
 	
 	public function find($binding = array()) {
 		$this->bind($binding);
-		
+
 		$this->_last_query = $this->buildSelectSql();
 		$result = $this->_db->queryArray($this->_last_query, $this->_criteria->binding);
 		
@@ -138,12 +166,7 @@ abstract class Model implements ArrayAccess {
 	private function construct($v) {
 		$c = get_class($this);
 		$t = new $c();
-
-		foreach ($v as $k => $n) {
-			if (property_exists($t, $k)) {
-				$t->{$k} = $n;
-			}
-		}
+		$t->inflat($v);
 		
 		return $t;
 	}
@@ -156,16 +179,24 @@ abstract class Model implements ArrayAccess {
 		return $result;
 	}
 	
-	public function insertSelect($insertSelect) {
-		$this->_criteria->insertSelect = $insertSelect;
+	public function clean() {
+		foreach (get_object_vars($this) as $var => $val) {
+			if ($var{0} != "_") {
+				$this->{$var} = null;
+			}
+		}
+	}
+	
+	public function insertSelect($cols = '*') {
+		$this->_last_query = $this->buildInsertSelectSql($cols);
 	}
 	
 	/**
 	 * @param array $array
 	 * @return boolean
 	 */
-	public function insertBatch($array) {
-		$this->_last_query = $this->buildInsertBatchSql($array);
+	public function insertBatch($array, $ignore = false) {
+		$this->_last_query = $this->buildInsertBatchSql($array, $ignore);
 		$result = $this->_db->query($this->_last_query, $this->_criteria->binding);
 
 		$this->reset();
@@ -173,8 +204,20 @@ abstract class Model implements ArrayAccess {
 		
 	}
 	
-	public function join($str) {
-		$this->_criteria->join = $str;
+	public function leftJoin($table, $cond) {
+		$this->_criteria->join[] = array("LEFT", $table, $cond);
+	}
+	
+	public function rightJoin($table, $cond) {
+		$this->_criteria->join[] = array("RIGHT", $table, $cond);
+	}
+	
+	public function innerJoin($table, $cond) {
+		$this->_criteria->join[] = array("INNER", $table, $cond);
+	}
+	
+	public function outerJoin($table, $cond) {
+		$this->_criteria->join[] = array("OUTER", $table, $cond);
 	}
 	
 	public function get($id) {
@@ -217,20 +260,31 @@ abstract class Model implements ArrayAccess {
 	
 	public function save() {
 		$data = $this->value();
-		$this->data($data);
 		
 		if ($this->{$this->_primary}) {
 			$this->where("{$this->_primary}=:primary_key", array('primary_key' => $this->{$this->_primary}));
 		}
 		
-		return !!$this->insertUpdate($data);
+		$result = !!$this->insertUpdate($data);
+		$this->reset();
+		if (property_exists($this, $this->_primary) && !$this->{$this->_primary}) {
+			$this->{$this->_primary} = $this->lastInsertId();
+		}
+		
+		return $result;
 	}
 	
 	public function bind($key, $value = null) {
 		if (!$key) return ;
 		
 		if (is_array($key)) {
-			$this->_criteria->binding = array_merge($this->_criteria->binding, $key);
+			foreach ($key as $k => $v) {
+				if (is_array($v)) {
+					$v = $this->_getValueArray($v);
+				}
+				
+				$this->_criteria->binding[$k] = $v;
+			}
 		} else {
 			if (is_array($value)) {
 				$value = $this->_getValueArray($value);
@@ -263,7 +317,18 @@ abstract class Model implements ArrayAccess {
 		 . $this->partOrderSql() . $this->partLimitSql();
 	}
 	
+	public function buildInsertSelectSql($cols = '*') {
+		if ($cols == '*') {
+			$cols_sql = "";
+		} else {
+			$cols_sql = "($cols)";
+		}
+	}
+	
 	public function buildInsertUpdateSql($data) {
+		if (isset($data[$this->_primary])) {
+			unset($data[$this->_primary]);
+		}
 		return $this->buildInsertSql($this->value()) . ' ON DUPLICATE KEY UPDATE ' . $this->partUpdateSql($data);
 	}
 	
@@ -329,15 +394,18 @@ abstract class Model implements ArrayAccess {
 	}
 	
 	private function partFromSql() {
-		return ' FROM ' . $this->getUsingTable();
+		return ' FROM ' . ($this->_criteria->from ? $this->_criteria->from : $this->getUsingTable());
 	}
 	
 	private function partJoinSql() {
-		if ($this->_criteria->join) {
-			return ' JOIN ' . $this->_criteria->join;
-		} else {
-			return '';
+		$join_str = array();
+		foreach ($this->_criteria->join as $row) {
+			if (count($row) == 3) {
+				$join_str[] = $row[0] . " JOIN " . $row[1] . ($row[2] ? " ON " . $row[2] : "");
+			}
 		}
+		
+		return ' ' . implode(" ", $join_str);
 	}
 	
 	private function partWhereSql() {
@@ -442,8 +510,11 @@ abstract class Model implements ArrayAccess {
 		return $this->_db->affectRows();
 	}
 	
+	public function lastInsertId() {
+		return $this->_db->lastInsertId();
+	}
+	
 	public function reset() {
 		$this->_criteria = new Criteria();
-		$props = get_object_vars($this);
 	}
 }

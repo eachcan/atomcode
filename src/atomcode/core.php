@@ -65,6 +65,11 @@ class AtomCode {
 			$_REQUEST = rstripslashes($_REQUEST);
 		}
 		
+		// why place the allow origin here? controller class may crash when running.
+		if (AtomCode::$config['view']['ajax-origen'] && $_SERVER['HTTP_ORIGIN'] && preg_match(AtomCode::$config['view']['ajax-origen'], $_SERVER['HTTP_ORIGIN'])) {
+			header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+		}
+		
 		$controller = new $controller_class();
 		$controller->config = &self::$config;
 		$action = AtomCode::$route->getActionName();
@@ -131,7 +136,13 @@ class AtomCode {
 	}
 
 	public static function decideRender() {
-		return is_ajax() ? 'json' : 'html';
+		if (is_cli()) {
+			return 'yaml';
+		} elseif (is_ajax()) {
+			return 'json';
+		} else {
+			return 'html';
+		}
 	}
 
 	private static function assocSession() {

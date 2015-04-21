@@ -86,8 +86,12 @@ function rrmdir($dir) {
 	rmdir($dir);
 }
 
+function is_cli() {
+	return defined("STDIN");
+}
+
 function is_ajax() {
-	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' || isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'];
 }
 
 function is_post() {

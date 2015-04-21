@@ -9,6 +9,7 @@ class Criteria {
 	public $binding = array();
 	public $groupBy = '';
 	public $insertSelect = '';
-	public $join = '';
+	public $join = array();
 	public $limit = '';
+	public $counter = 0;
 }

@@ -1,10 +1,12 @@
 <?php
 
 class Session {
+	private static $exists = false;
+	
 	public function __construct() {
 		session_name(AtomCode::$config['session']['key']);
-		if ($_GET[AtomCode::$config['session']['key']]) {
-			session_id($_GET[AtomCode::$config['session']['key']]);
+		if ($_REQUEST[AtomCode::$config['session']['key']]) {
+			session_id($_REQUEST[AtomCode::$config['session']['key']]);
 		}
 	}
 	
@@ -26,23 +28,27 @@ class Session {
 		if ($results) {
 			if ($results[0]['last_activity'] > time() - 86400 * 2) {
 				$session = $results[0]['user_data'];
+				self::$exists = true;
 			} else {
 				$this->destroy($session_id);
 			}
 		}
+		
 		return $session;
 	}
 
 	public function write($session_id, $data) {
 		$data = str_replace("'", "\\'", $data);
 		$time = time();
-		$sql = "UPDATE sessions SET user_data= '$data', last_activity= '$time' WHERE session_id = '$session_id'";
 		$db = Database::get(AtomCode::$config['session']['db']);
-		$query = $db->bind($sql, array());
-		$db->query($query);
-		if (!$query->rowCount()) {
-			$sql = "insert sessions(session_id, ip_address, user_agent, last_activity, user_data) VALUES ('$session_id', '$_SERVER[REMOTE_ADDR]', '$_SERVER[HTTP_USER_AGENT]', " . time() . ", '$data')";
-			$db->query($sql);
+		if (self::$exists) {
+			$sql = "UPDATE sessions SET user_data= '$data', last_activity= '$time' WHERE session_id = '$session_id'";
+			$query = $db->bind($sql, array());
+			$db->query($query);
+		} else {
+			$sql = "insert sessions(session_id, ip_address, user_agent, last_activity, user_data) VALUES ('$session_id', '" . get_ip() . "', '" . $_SERVER['HTTP_USER_AGENT'] . "', " . time() . ", '$data')";
+
+			$result = $db->query($sql);
 		}
 		return true;
 	}

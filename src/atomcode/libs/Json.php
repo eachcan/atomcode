@@ -31,10 +31,10 @@ class Json {
 			return floatval($arr);
 		}
 		if (is_null($arr)) {
-			return "";
+			return '""';
 		}
 		if (is_string($arr)) {
-			return '"' . str_replace(array('\\', '"'), array('\\\\', '\\"'), $arr) . '"';
+			return '"' . str_replace(array('\\', '"', "\n", "\r", "\t"), array('\\\\', '\\"', '\n', '\r', '\t'), $arr) . '"';
 		}
 		if (is_object($arr)) {
 			$arr = get_object_vars($arr);
@@ -54,7 +54,7 @@ class Json {
 		if ($is_assoc) {
 			$a = array();
 			foreach ($arr as $k => $v) {
-				$a[] = '"' . str_replace(array('\\', '"'), array('\\\\', '\\"'), $k) . '":' . self::encode($v);
+				$a[] = '"' . str_replace(array('\\', '"', "\n", "\r", "\t"), array('\\\\', '\\"', '\n', "\r", "\t"), $k) . '":' . self::encode($v);
 			}
 			return '{' . implode(',', $a) . '}';
 		} else {
