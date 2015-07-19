@@ -23,6 +23,10 @@ abstract class Controller {
 		return $this->__data;
 	}
 	
+	public function getVar($name) {
+		return $this->__data[$name];
+	}
+	
 	protected function setView($view) {
 		$this->__view = $view;
 	}
@@ -53,5 +57,10 @@ abstract class Controller {
 	
 	public function requireUrl() {
 		return $this->requireRoute('url');
+	}
+	
+	protected function debug() {
+		error_reporting(E_ALL & ~E_NOTICE);
+		ini_set("display_errors", 1);
 	}
 }

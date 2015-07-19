@@ -36,6 +36,7 @@ class AtomCode {
 		}
 		
 		self::registerAutoloadDir(SYS_PATH . DIRECTORY_SEPARATOR . 'libs');
+		self::registerAutoloadDir(APP_PATH . DIRECTORY_SEPARATOR . 'model');
 		self::registerAutoload();
 		
 		if (AtomCode::$config['session']['mode'] == 'db') {
@@ -160,11 +161,7 @@ class AtomCode {
 function __atomcode_autoload($class) {
 	$class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
 	
-	if (substr($class, -5) == 'Model') {
-		include APP_PATH . '/model/' . $class . '.php';
-	} else {
-		include $class . '.php';
-	}
+	include $class . '.php';
 }
 abstract class Route {
 
@@ -225,7 +222,7 @@ abstract class Route {
 	}
 
 	public function getControllerClass() {
-		return str_replace(" ", '', ucwords(str_replace(array('-', '_'), '', $this->controller))) . 'Controller';
+		return str_replace(" ", '', ucwords(str_replace(array('-', '_'), ' ', $this->controller))) . 'Controller';
 	}
 
 	public function getControllerFile() {

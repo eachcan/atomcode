@@ -3,11 +3,17 @@
 class Session {
 	private static $exists = false;
 	
+	private static $user_id = 0;
+	
 	public function __construct() {
 		session_name(AtomCode::$config['session']['key']);
 		if ($_REQUEST[AtomCode::$config['session']['key']]) {
 			session_id($_REQUEST[AtomCode::$config['session']['key']]);
 		}
+	}
+	
+	public static function setUser($user_id) {
+		self::$user_id = intval($user_id);
 	}
 	
 	public function open($save_path, $session_name) {
@@ -42,11 +48,11 @@ class Session {
 		$time = time();
 		$db = Database::get(AtomCode::$config['session']['db']);
 		if (self::$exists) {
-			$sql = "UPDATE sessions SET user_data= '$data', last_activity= '$time' WHERE session_id = '$session_id'";
+			$sql = "UPDATE sessions SET user_data= '$data', last_activity= '$time', user_id='" . self::$user_id . "' WHERE session_id = '$session_id'";
 			$query = $db->bind($sql, array());
 			$db->query($query);
 		} else {
-			$sql = "insert sessions(session_id, ip_address, user_agent, last_activity, user_data) VALUES ('$session_id', '" . get_ip() . "', '" . $_SERVER['HTTP_USER_AGENT'] . "', " . time() . ", '$data')";
+			$sql = "insert sessions(session_id, ip_address, user_agent, last_activity, user_data, user_id) VALUES ('$session_id', '" . get_ip() . "', '" . $_SERVER['HTTP_USER_AGENT'] . "', " . time() . ", '$data', '" . self::$user_id . "')";
 
 			$result = $db->query($sql);
 		}
@@ -55,6 +61,8 @@ class Session {
 
 	public function destroy($session_id) {
 		$sql = "DELETE FROM sessions WHERE session_id = :id";
+		
+		self::$user_id = 0;
 		
 		$db = Database::get(AtomCode::$config['session']['db']);
 		$db->query($sql, array('id' => $session_id));

@@ -16,6 +16,8 @@ abstract class Model implements ArrayAccess {
 	
 	protected $_primary = "id";
 	
+	const ORIGEN_VALUE = "__MODEL_ORIGEN_VALUE_!@#$%^&*__I_BELIEVE_YOU_WOULDNOT_USE_THIS";
+	
 	public function __construct() {
 		$this->_table = $this->getTableName();
 		$this->_config = & AtomCode::$config['db'][$this->_database];
@@ -262,7 +264,7 @@ abstract class Model implements ArrayAccess {
 		$data = $this->value();
 		
 		if ($this->{$this->_primary}) {
-			$this->where("{$this->_primary}=:primary_key", array('primary_key' => $this->{$this->_primary}));
+			$this->where("`{$this->_primary}`=:primary_key", array('primary_key' => $this->{$this->_primary}));
 		}
 		
 		$result = !!$this->insertUpdate($data);
@@ -311,6 +313,15 @@ abstract class Model implements ArrayAccess {
 		return $result;
 	}
 	
+	public function queryArray($sql, $binding = array()) {
+		$this->bind($binding);
+		$this->_last_query = $sql;
+		$result = $this->_db->queryArray($this->_last_query, $this->_criteria->binding);
+
+		$this->reset();
+		return $result;
+	}
+	
 	public function buildSelectSql() {
 		return $this->partSelectSql() . $this->partFromSql() . $this->partJoinSql()
 		 . $this->partWhereSql() . $this->partGroupSql() . $this->partHavingSql()
@@ -343,6 +354,7 @@ abstract class Model implements ArrayAccess {
 			}
 		}
 		$cols = array_keys($data);
+		$cols = $this->quoteKey($cols);
 		
 		return 'INSERT' . ($ignore ? ' IGNORE' : '') . ' INTO ' . $this->getUsingTable() . ' (' . implode(', ', $cols) . ') VALUES (' . implode(', ', $this->quote($data)) . ')';
 	}
@@ -364,6 +376,7 @@ abstract class Model implements ArrayAccess {
 			
 			$cols[] = $k;
 		}
+		$this->quoteKey($cols);
 		
 		// now we apply a filter for strip uneffective keys in the array 
 		foreach ($array as $data) {
@@ -382,7 +395,7 @@ abstract class Model implements ArrayAccess {
 	public function buildUpdateSql($data) {
 		$data = $data ? $data : $this->value();
 		
-		return 'UPDATE ' . $this->getUsingTable() . ' SET ' . $this->partUpdateSql($data) . $this->partWhereSql() . $this->partOrderSql() . $this->partLimitSql();
+		return 'UPDATE ' . $this->partFromSql(false) . $this->partJoinSql() . ' SET ' . $this->partUpdateSql($data) . $this->partWhereSql() . $this->partOrderSql() . $this->partLimitSql();
 	}
 	
 	public function buildDeleteSql() {
@@ -390,11 +403,11 @@ abstract class Model implements ArrayAccess {
 	}
 	
 	private function partSelectSql() {
-		return 'SELECT ' . ($this->_criteria->select ? $this->_criteria->select : implode(', ', $this->getTableColumns()));
+		return 'SELECT ' . ($this->_criteria->select ? $this->_criteria->select : implode(', ', $this->quoteKey($this->getTableColumns())));
 	}
 	
-	private function partFromSql() {
-		return ' FROM ' . ($this->_criteria->from ? $this->_criteria->from : $this->getUsingTable());
+	private function partFromSql($add_from = true) {
+		return ($add_from ? ' FROM ' : ' ') . ($this->_criteria->from ? $this->_criteria->from : $this->getUsingTable());
 	}
 	
 	private function partJoinSql() {
@@ -462,7 +475,13 @@ abstract class Model implements ArrayAccess {
 		foreach ($data as $k => $v) {
 			if (is_null($v)) continue;
 			
-			$items[] = $k . '=' . ($v == '?' ? $v : $this->quote($v));
+			if ($v === self::ORIGEN_VALUE) {
+				$items[] = $k;
+			} else {
+				$k = $this->quoteKey($k);
+				
+				$items[] = $k . '=' . ($v == '?' ? $v : $this->quote($v));
+			}
 		}
 		
 		return implode(', ', $items);
@@ -480,6 +499,34 @@ abstract class Model implements ArrayAccess {
 		}
 		
 		return $data;
+	}
+	
+	public function quoteKey($keys) {
+		if (!is_array($keys)) {
+			if (preg_match("/^\w+$/", $keys) && !is_numeric($keys{0})) {
+				return '`' . $keys . '`';
+			} else {
+				return $keys;
+			}
+		}
+
+		if (array_key_exists(0, $keys)) {
+			
+			foreach ($keys as &$key) {
+				$key = $this->quoteKey($key);
+			}
+			
+			return $keys;
+		}
+		
+		$new = array();
+		foreach ($keys as $key => $value) {
+			$key = $this->quoteKey($key);
+			
+			$new[$key] = $value;
+		}
+		
+		return $new;
 	}
 	
 	public function value() {

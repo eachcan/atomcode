@@ -20,9 +20,15 @@ function rhtmlspecialchars($string) {
 	$string = preg_replace('/&amp;((#(\d{3,5}|x[a-fA-F0-9]{4}));)/', '&\\1', str_replace(array('&', '"', '<', '>'), array('&amp;', '&quot;', '&lt;', '&gt;'), $string));
 	return $string;
 }
-function log_err($msg = '') {
+function log_err($msg = '', $tag = '') {
 	if (AtomCode::$config['log']) {
-		file_put_contents(AtomCode::$config['logdir'] . '/' . date("Y-m-d") . '.log', '[' . date("Y-m-d H:i:s") . '] [' . AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . '->' . AtomCode::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
+		if ($tag) $tag .= '-';
+		$file = AtomCode::$config['logdir'] . '/' . $tag . date("Y-m-d") . '.log';
+		if (!file_exists($file)) {
+			touch($file);
+			chmod($file, 0777);
+		}
+		file_put_contents($file, '[' . date("Y-m-d H:i:s") . '] [' . AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . '->' . AtomCode::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
 	}
 }
 
@@ -91,7 +97,7 @@ function is_cli() {
 }
 
 function is_ajax() {
-	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' || isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'];
+	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' || (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'] && is_get());
 }
 
 function is_post() {
