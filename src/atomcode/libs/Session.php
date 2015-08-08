@@ -7,8 +7,15 @@ class Session {
 	
 	public function __construct() {
 		session_name(AtomCode::$config['session']['key']);
-		if ($_REQUEST[AtomCode::$config['session']['key']]) {
-			session_id($_REQUEST[AtomCode::$config['session']['key']]);
+		$id = $_POST[AtomCode::$config['session']['key']];
+		if (!$id) {
+			$id = $_GET[AtomCode::$config['session']['key']];
+		}
+		if (!$id) {
+			$id = $_COOKIE[AtomCode::$config['session']['key']];
+		}
+		if ($id) {
+			session_id($id);
 		}
 	}
 	

@@ -144,4 +144,17 @@ class Database {
 	public function lastInsertId() {
 		return $this->link->lastInsertId();
 	}
+	
+	public function beginTransaction($mode = PDO::ERRMODE_WARNING) {
+		$this->link->setAttribute(PDO::ATTR_ERRMODE, $mode);
+		return $this->link->beginTransaction();
+	}
+	
+	public function commit() {
+		return $this->link->commit();
+	}
+	
+	public function rollback() {
+		return $this->link->rollBack();
+	}
 }

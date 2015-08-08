@@ -235,6 +235,10 @@ abstract class Model implements ArrayAccess {
 		$result = $this->_db->query($this->_last_query, $this->_criteria->binding);
 
 		$this->reset();
+		if (property_exists($this, $this->_primary) && !$this->{$this->_primary}) {
+			$this->{$this->_primary} = $this->lastInsertId();
+		}
+		
 		return $result;
 	}
 	
@@ -563,5 +567,37 @@ abstract class Model implements ArrayAccess {
 	
 	public function reset() {
 		$this->_criteria = new Criteria();
+	}
+	
+	/**
+	 * 启动一次事务
+	 * 
+	 * 如果之前已经启动了一次事务，则不会有任何反应。启动一次事务的本质是关闭自动提交事务模式。
+	 * 
+	 * 如果启动了事务但中途中断执行而没有调用提交事务，则会自动回滚。
+	 * 
+	 * 请不要同时使用 mysql_query("begin transaction") 或 $model->query("begin transaction"); 或其他方式启动事务。否则将在每个链接单独启用事务。
+	 * 
+	 * @param int 错误类型
+	 * @return bool Returns true on success or false on failure.  
+	 * @link http://www.php.net/manual/zh/pdo.begintransaction.php
+	 * @link http://php.net/manual/zh/pdo.constants.php#PDO::ERRMODE_SILENT
+	 */
+	public function beginTransaction($err_mode = PDO::ERRMODE_WARNING) {
+		return $this->_db->beginTransaction($err_mode);
+	}
+	
+	/**
+	 * 提交事务，务必在启用事务后提交，否则没有任何作用
+	 */
+	public function commit() {
+		return $this->_db->commit();
+	}
+	
+	/**
+	 * 回滚事务
+	 */
+	public function rollback() {
+		return $this->_db->rollback();
 	}
 }
