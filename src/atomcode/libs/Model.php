@@ -20,6 +20,10 @@ abstract class Model implements ArrayAccess {
 	
 	public function __construct() {
 		$this->_table = $this->getTableName();
+		if (!isset(AtomCode::$config['database'])) {
+			AtomCode::addConfig("database");
+		}
+		
 		$this->_config = & AtomCode::$config['db'][$this->_database];
 		$this->_db = & Database::get($this->_database);
 		
@@ -103,6 +107,13 @@ abstract class Model implements ArrayAccess {
 				$this->bind($binding);
 			}
 		}
+	}
+	
+	/**
+	 * 对于分页查询后仍然需要查询总数的情况，需要首先调用本方法
+	 */
+	public function prepareFoundRows() {
+		$this->_criteria->found_rows = true;
 	}
 	
 	public function orderBy($order) {
@@ -280,6 +291,21 @@ abstract class Model implements ArrayAccess {
 		return $result;
 	}
 	
+	public function lock($cond = '') {
+		if (!$cond) {
+			$cond = $this->getUsingTable() . " READ";
+		}
+		$this->_last_query = $this->buildLockSql($cond);
+		$result = $this->_db->query($this->_last_query);
+		return $result;
+	}
+	
+	public function unlock() {
+		$this->_last_query = $this->buildUnlockSql();
+		$result = $this->_db->query($this->_last_query);
+		return $result;
+	}
+	
 	public function bind($key, $value = null) {
 		if (!$key) return ;
 		
@@ -406,8 +432,17 @@ abstract class Model implements ArrayAccess {
 		return 'DELETE ' . $this->partFromSql() . $this->partWhereSql() . $this->partOrderSql() . $this->partLimitSql();
 	}
 	
+	public function buildLockSql($read) {
+		$sql = 'LOCK TABLE ' . $read;
+		return $sql;
+	}
+	
+	public function buildUnlockSql() {
+		return 'UNLOCK TABLES';
+	}
+	
 	private function partSelectSql() {
-		return 'SELECT ' . ($this->_criteria->select ? $this->_criteria->select : implode(', ', $this->quoteKey($this->getTableColumns())));
+		return 'SELECT ' . ($this->_criteria->found_rows ? 'SQL_CALC_FOUND_ROWS ' : '') . ($this->_criteria->select ? $this->_criteria->select : implode(', ', $this->quoteKey($this->getTableColumns())));
 	}
 	
 	private function partFromSql($add_from = true) {
@@ -567,6 +602,24 @@ abstract class Model implements ArrayAccess {
 	
 	public function reset() {
 		$this->_criteria = new Criteria();
+	}
+	
+	/**
+	 * 
+	 * @return 查询 limit 语句中去掉 limit 语句的总条数
+	 */
+	public function foundRows() {
+		$result = $this->_db->query("SELECT FOUND_ROWS() count");
+		$all = $result->fetchColumn();
+		
+		return $all;
+	}
+	
+	/**
+	 * @link Model::foundRows()
+	 */
+	public function getFoundRows() {
+		return $this->foundRows();
 	}
 	
 	/**

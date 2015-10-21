@@ -21,9 +21,6 @@ class AtomCode {
 		if (ENVIRONMENT == "production") {
 			error_reporting(0);
 			ini_set("display_errors", 0);
-		} else {
-			error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-			ini_set("display_errors", 1);
 		}
 		
 		if (isset($_REQUEST['GLOBALS']) or isset($_FILES['GLOBALS'])) {
@@ -73,9 +70,16 @@ class AtomCode {
 		
 		$controller = new $controller_class();
 		$controller->config = &self::$config;
+		$action_str = AtomCode::$route->getAction();
+		
+		$src_action = $action_str;
+		$action_str = $controller->_resolve($action_str);
+		
+		AtomCode::$route->setAction($action_str);
 		$action = AtomCode::$route->getActionName();
+		
 		if (!method_exists($controller, $action)) {
-			exit("Action: $controller_class does not have method `$action`");
+			exit("Action: $controller_class does not have method `$action_str`" . ($action == $src_action ? "" : ", origen action is $src_action"));
 		}
 		$result = $controller->$action();
 		if (!$result) {
@@ -114,7 +118,7 @@ class AtomCode {
 		}
 		
 		if (!$config || !is_array($config)) {
-			return;
+			return array();
 		}
 		
 		if ($prior) {
@@ -122,6 +126,8 @@ class AtomCode {
 		} else {
 			self::$config = array_merge($config, self::$config);
 		}
+		
+		return self::$config[$file];
 	}
 
 	private static function registerAutoload() {
@@ -230,7 +236,7 @@ abstract class Route {
 	}
 
 	public function getActionName() {
-		return $this->getAction() . 'Action';
+		return str_replace(" ", '', ucwords(str_replace(array('-', '_'), ' ', $this->action))). 'Action';
 	}
 
 	public function setAction($ac) {

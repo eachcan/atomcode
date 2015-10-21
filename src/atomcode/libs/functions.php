@@ -97,7 +97,7 @@ function is_cli() {
 }
 
 function is_ajax() {
-	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' || (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'] && is_get());
+	return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' || (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'] && $_GET['jsonp']);
 }
 
 function is_post() {
@@ -110,4 +110,42 @@ function is_get() {
 
 function is_https() {
 	return $_SERVER['SERVER_PORT'] == 443;
+}
+function get_device_type(){
+	$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
+	$type = 'other';
+	if(strpos($agent, 'iphone')){
+		$type = 'iphone';
+	}
+	if(strpos($agent, 'ipad')){
+		$type = 'ipad';
+	}
+	if(strpos($agent, 'android')){
+		$type = 'android';
+	}
+	return $type;
+}
+
+function is_android() {
+	return get_device_type() == "android";
+}
+
+function is_iphone() {
+	return get_device_type() == "iphone";
+}
+
+function is_ipad() {
+	return get_device_type() == "ipad";
+}
+
+function is_ios() {
+	return in_array(get_device_type(), array("ipad", "iphone"));
+}
+
+function is_mobile() {
+	return in_array(get_device_type(), array("ipad", "iphone", "android"));
+}
+
+function url($action) {
+	return rtrim(AtomCode::$config['route']['base'], ' /') . ltrim($action, '/ ');
 }

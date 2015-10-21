@@ -16,12 +16,18 @@ class Database {
 	
 	private $log_sql = false;
 	
+	private $_binding, $_unbinding;
+	
 	/**
 	 * 
 	 * @param string $specify_db
 	 * @return Database
 	 */
 	public static function &get($specify_db = 'default') {
+		if (!AtomCode::$config['db']) {
+			AtomCode::addConfig("database");
+		}
+		
 		$configs = AtomCode::$config['db'];
 		
 		if (!isset(self::$instances[$specify_db]) && is_array($configs[$specify_db])) {
@@ -56,12 +62,13 @@ class Database {
 		$this->_binding = &$binding;
 		$sql = preg_replace_callback("/::(\\w+)/", array($this, 'repl_origen'), $sql);
 		
-// 		foreach ($binding as $k => $_) {
-// 			if ($k{0} == ':') {
-// 				$sql = str_replace(":$k", $_, $sql);
-// 				unset($binding[$k]);
-// 			}
-// 		}
+		if ($this->_unbinding) {
+			foreach ($this->_unbinding as $un) {
+				if (array_key_exists($un, $this->_binding)) {
+					unset($this->_binding[$un]);
+				}
+			}
+		}
 		
 		$stmt = $this->link->prepare($sql);
 		
@@ -79,7 +86,7 @@ class Database {
 		}
 		
 		$val = $this->_binding[$matches[1]];
-		unset($this->_binding[$matches[1]]);
+		$this->_unbinding[] = $matches[1];
 		
 		return $val;
 	}

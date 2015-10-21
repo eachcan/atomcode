@@ -1174,5 +1174,5 @@ do {
 	if (empty($_SERVER['PHP_SELF']) || FALSE === strpos($_SERVER['PHP_SELF'], 'Spyc.php'))
 		break;
 	$file = $argv[1];
-	echo json_encode(spyc_load_file($file));
+	echo Json::encode(spyc_load_file($file));
 } while (0);

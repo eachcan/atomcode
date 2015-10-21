@@ -63,4 +63,12 @@ abstract class Controller {
 		error_reporting(E_ALL & ~E_NOTICE);
 		ini_set("display_errors", 1);
 	}
+	
+	public function _resolve($action) {
+		return $action;
+	}
+	
+	public function redirect($action) {
+		header('location: ' . rtrim(AtomCode::$config['route']['base'], ' /') . ltrim($action, '/ '));
+	}
 }
