@@ -69,6 +69,6 @@ abstract class Controller {
 	}
 	
 	public function redirect($action) {
-		header('location: ' . rtrim(AtomCode::$config['route']['base'], ' /') . ltrim($action, '/ '));
+		header('location: ' . rtrim(AtomCode::$config['route']['base'], ' /') . '/' . ltrim($action, '/ '));
 	}
 }
