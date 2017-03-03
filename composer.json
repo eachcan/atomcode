@@ -1,0 +1,21 @@
+{
+	"name": "atomcode/atomcode",
+	"description": "a simple php framework",
+	"keywords": ["php", "php framework", "atomcode"],
+	"homepage": "https://github.com/eachcan/atomcode",
+	"license": "Apache 2.0",
+	"authors": [
+		{
+			"name": "Eachcan",
+			"homepage": "http://www.zhangjinshuai.com"
+		}
+	],
+	"require": {
+		"php": ">=5.4.0"
+	},
+	"autoload": {
+		"atomcode": {
+			"\\": "src/"
+		}
+	}
+}
