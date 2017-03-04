@@ -3,8 +3,8 @@ namespace atomcode;
 
 define('SYS_PATH', __DIR__);
 
-include SYS_PATH . '/libs/functions.php';
-include SYS_PATH . '/libs/Model.php';
+include SYS_PATH . '/functions.php';
+include SYS_PATH . '/Model.php';
 class Core {
 
 	public static $config = array();
