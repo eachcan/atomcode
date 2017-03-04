@@ -21,14 +21,14 @@ function rhtmlspecialchars($string) {
 	return $string;
 }
 function log_err($msg = '', $tag = '') {
-	if (AtomCode::$config['log']) {
+	if (atomcode\Core::$config['log']) {
 		if ($tag) $tag .= '-';
-		$file = AtomCode::$config['logdir'] . '/' . $tag . date("Y-m-d") . '.log';
+		$file = atomcode\Core::$config['logdir'] . '/' . $tag . date("Y-m-d") . '.log';
 		if (!file_exists($file)) {
 			touch($file);
 			chmod($file, 0777);
 		}
-		file_put_contents($file, '[' . date("Y-m-d H:i:s") . '] [' . AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . '->' . AtomCode::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
+		file_put_contents($file, '[' . date("Y-m-d H:i:s") . '] [' . atomcode\Core::$route->getModuleDir() . atomcode\Core::$route->getController() . '->' . atomcode\Core::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
 	}
 }
 
@@ -147,5 +147,5 @@ function is_mobile() {
 }
 
 function url($action) {
-	return rtrim(AtomCode::$config['route']['base'], ' /') . ltrim($action, '/ ');
+	return rtrim(atomcode\Core::$config['route']['base'], ' /') . ltrim($action, '/ ');
 }

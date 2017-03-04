@@ -1,4 +1,6 @@
 <?php
+namespace atomcode;
+
 abstract class Model implements ArrayAccess {
 	/**
 	 * @var Criteria
@@ -20,11 +22,11 @@ abstract class Model implements ArrayAccess {
 	
 	public function __construct() {
 		$this->_table = $this->getTableName();
-		if (!isset(AtomCode::$config['database'])) {
-			AtomCode::addConfig("database");
+		if (!isset(Core::$config['database'])) {
+			Core::addConfig("database");
 		}
 		
-		$this->_config = & AtomCode::$config['db'][$this->_database];
+		$this->_config = & Core::$config['db'][$this->_database];
 		$this->_db = & Database::get($this->_database);
 		
 		$this->reset();

@@ -1,9 +1,11 @@
 <?php
+namespace atomcode;
+
 define('SYS_PATH', __DIR__);
 
 include SYS_PATH . '/libs/functions.php';
 include SYS_PATH . '/libs/Model.php';
-class AtomCode {
+class Core {
 
 	public static $config = array();
 
@@ -36,22 +38,22 @@ class AtomCode {
 		self::registerAutoloadDir(APP_PATH . DIRECTORY_SEPARATOR . 'model');
 		self::registerAutoload();
 		
-		if (AtomCode::$config['session']['mode'] == 'db') {
+		if (self::$config['session']['mode'] == 'db') {
 			self::$session = new Session();
 			self::assocSession();
 		}
 		
 		if (defined('STDIN')) {
-			AtomCode::$route = new RouteCli();
+			self::$route = new RouteCli();
 		} else {
-			AtomCode::$route = new RouteUrl();
+			self::$route = new RouteUrl();
 		}
 		
-		$controller_file = APP_PATH . '/controller/' . AtomCode::$route->getControllerFile();
+		$controller_file = APP_PATH . '/controller/' . self::$route->getControllerFile();
 		if (file_exists($controller_file))
 			include $controller_file;
 		
-		$controller_class = AtomCode::$route->getControllerClass();
+		$controller_class = self::$route->getControllerClass();
 		if (!class_exists($controller_class, false)) {
 			exit("Controller: $controller_class does not exist");
 		}
@@ -64,19 +66,19 @@ class AtomCode {
 		}
 		
 		// why place the allow origin here? controller class may crash when running.
-		if (AtomCode::$config['view']['ajax-origen'] && $_SERVER['HTTP_ORIGIN'] && preg_match(AtomCode::$config['view']['ajax-origen'], $_SERVER['HTTP_ORIGIN'])) {
+		if (self::$config['view']['ajax-origen'] && $_SERVER['HTTP_ORIGIN'] && preg_match(self::$config['view']['ajax-origen'], $_SERVER['HTTP_ORIGIN'])) {
 			header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
 		}
 		
 		$controller = new $controller_class();
 		$controller->config = &self::$config;
-		$action_str = AtomCode::$route->getAction();
+		$action_str = self::$route->getAction();
 		
 		$src_action = $action_str;
 		$action_str = $controller->_resolve($action_str);
 		
-		AtomCode::$route->setAction($action_str);
-		$action = AtomCode::$route->getActionName();
+		self::$route->setAction($action_str);
+		$action = self::$route->getActionName();
 		
 		if (!method_exists($controller, $action)) {
 			exit("Action: $controller_class does not have method `$action_str`" . ($action == $src_action ? "" : ", origen action is $src_action"));
@@ -89,7 +91,7 @@ class AtomCode {
 		if (!$controller->isDisabledRender()) {
 			$view = $controller->getView();
 			if (!$view) {
-				$view = AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . DIRECTORY_SEPARATOR . AtomCode::$route->getAction();
+				$view = self::$route->getModuleDir() . self::$route->getController() . DIRECTORY_SEPARATOR . self::$route->getAction();
 			}
 			
 			$render = $controller->getRender();
@@ -182,7 +184,7 @@ abstract class Route {
 	protected $path = "";
 
 	public function __construct() {
-		$this->config = AtomCode::$config['route'];
+		$this->config = self::$config['route'];
 		
 		$this->module = $this->config['default_module'];
 		$this->controller = $this->config['default_controller'];

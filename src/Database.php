@@ -1,4 +1,6 @@
 <?php
+namespace atomcode;
+
 class Database {
 	private static $links = array();
 	/**
@@ -24,11 +26,11 @@ class Database {
 	 * @return Database
 	 */
 	public static function &get($specify_db = 'default') {
-		if (!AtomCode::$config['db']) {
-			AtomCode::addConfig("database");
+		if (!Core::$config['db']) {
+			Core::addConfig("database");
 		}
 		
-		$configs = AtomCode::$config['db'];
+		$configs = Core::$config['db'];
 		
 		if (!isset(self::$instances[$specify_db]) && is_array($configs[$specify_db])) {
 			self::$instances[$specify_db] = new Database($specify_db, $configs[$specify_db]);

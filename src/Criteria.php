@@ -1,4 +1,6 @@
 <?php
+namespace atomcode;
+
 class Criteria {
 	public $select = '*';
 	public $from = '';

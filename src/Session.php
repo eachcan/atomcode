@@ -1,4 +1,5 @@
 <?php
+namespace atomcode;
 
 class Session {
 	private static $exists = false;
