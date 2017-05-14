@@ -1,13 +1,11 @@
 <?php
-namespace atomcode;
-
 abstract class Model implements ArrayAccess {
 	/**
 	 * @var Criteria
 	 */
 	private $_criteria;
 	
-	public $_database = 'default';
+	public $_database = '';
 	public $_table = '';
 	public $_config;
 	protected $_last_query = "";
@@ -22,13 +20,14 @@ abstract class Model implements ArrayAccess {
 	
 	public function __construct() {
 		$this->_table = $this->getTableName();
-		if (!isset(Core::$config['database'])) {
-			Core::addConfig("database");
+		if (!isset(AtomCode::$config['database'])) {
+			AtomCode::addConfig("database");
 		}
 		
-		$this->_config = & Core::$config['db'][$this->_database];
+		$this->_config = & AtomCode::$config['database'][$this->getDatabaseGroup()];
+
 		$this->_db = & Database::get($this->_database);
-		
+
 		$this->reset();
 	}
 	
@@ -64,9 +63,25 @@ abstract class Model implements ArrayAccess {
 		
 		$this->{$name} = $value;
 	}
+
+    public function getDatabaseGroup() {
+        if ($this->_database) return $this->_database;
+
+        $class_name = get_called_class();
+        $ps = explode("\\", $class_name);
+        if (count($ps) == 3) {
+            $this->_database = $ps[1];
+        } else {
+            $this->_database = 'default';
+        }
+
+        return $this->_database;
+	}
 	
 	public function getTableName(){
 		$class = get_class($this);
+		$ps = explode('\\', $class);
+		$class = end($ps);
 		$name = substr($class, 0, -5);
 		$name = preg_replace("/([A-Z])/", "_$1", $name);
 		return strtolower(substr($name, 1));

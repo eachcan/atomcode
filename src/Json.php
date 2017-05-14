@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 class Json {
 
 	private static $pos = 0;

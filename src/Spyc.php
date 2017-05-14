@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 /**
    * Spyc -- A Simple PHP YAML Class
    * @version 0.5.1

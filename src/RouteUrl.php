@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 class RouteUrl extends Route {
 	public function __construct() {
 		parent::__construct();

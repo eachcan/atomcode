@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 class RouteCli extends Route {
 	public function __construct() {
 		global $argv;

@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 class View {
 
 	public static function render($render, $view, $data) {

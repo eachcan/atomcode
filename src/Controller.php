@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 abstract class Controller {
 	private $__render = "", $__data = array(), $__view = "", $__disable_render = false;
 	public $config;
@@ -71,6 +69,10 @@ abstract class Controller {
 	}
 	
 	public function redirect($action) {
-		header('location: ' . rtrim(Core::$config['route']['base'], ' /') . '/' . ltrim($action, '/ '));
+	    $will_replace = strpos(AtomCode::$config['route']['base'], '?') !== false;
+	    if ($will_replace) {
+	        $action = str_replace('?', '&', $action);
+        }
+		header('location: ' . rtrim(AtomCode::$config['route']['base'], ' /') . '/' . ltrim($action, '/ '));
 	}
 }

@@ -1,6 +1,4 @@
 <?php
-namespace atomcode;
-
 class Database {
 	private static $links = array();
 	/**
@@ -26,11 +24,11 @@ class Database {
 	 * @return Database
 	 */
 	public static function &get($specify_db = 'default') {
-		if (!Core::$config['db']) {
-			Core::addConfig("database");
+		if (!AtomCode::$config['database']) {
+			AtomCode::addConfig("database");
 		}
 		
-		$configs = Core::$config['db'];
+		$configs = AtomCode::$config['database'];
 		
 		if (!isset(self::$instances[$specify_db]) && is_array($configs[$specify_db])) {
 			self::$instances[$specify_db] = new Database($specify_db, $configs[$specify_db]);
@@ -44,6 +42,7 @@ class Database {
 		try {
 			self::$links[$specify_db] = new PDO($dsn, $config['username'], $config['password']);
 			$this->link = &self::$links[$specify_db];
+
 			$stmt = $this->link->prepare('SET NAMES ?'); 
 			if (!$stmt->execute(array($config['char_set']))) {
 				$this->messages[] = "unsupport charset: " . $config['char_set'] . "\nPDO: " . var_export($stmt->errorInfo(), true);
@@ -54,6 +53,9 @@ class Database {
 		} catch (PDOException $e) {
 			log_err("cannot connect to db: $dsn, user: $config[username], error: " . $e->getMessage());
 			$this->messages[] = "cannot connect to db: $dsn, user: $config[username], error: " . $e->getMessage();
+			if (ENVIRONMENT != 'production') {
+			    throw $e;
+            }
 		}
 	}
 
@@ -109,6 +111,7 @@ class Database {
 		if (!$stmt->execute()) {
 			log_err("fail sql: " . $stmt->queryString);
 			$error = $stmt->errorInfo();
+            var_dump($error);
 			$this->messages[] = "query error: " . print_r($error, true);
 			log_err("query error: " . print_r($error, true));
 			return false;
