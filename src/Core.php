@@ -1,8 +1,8 @@
 <?php
 define('SYS_PATH', __DIR__);
 
-include SYS_PATH . '/libs/functions.php';
-include SYS_PATH . '/libs/Model.php';
+include SYS_PATH . '/functions.php';
+include SYS_PATH . '/Model.php';
 class AtomCode {
 
 	public static $config = array();
@@ -26,57 +26,47 @@ class AtomCode {
 		if (isset($_REQUEST['GLOBALS']) or isset($_FILES['GLOBALS'])) {
 			exit('Request tainting attempted.');
 		}
+
+        AtomCode::registerAutoloadDir(APP_PATH);
 		
 		self::addConfig("config", false);
 		foreach (self::$auto_load_config as $file) {
 			self::addConfig($file, false);
 		}
 		
-		self::registerAutoloadDir(SYS_PATH . DIRECTORY_SEPARATOR . 'libs');
-		self::registerAutoloadDir(APP_PATH . DIRECTORY_SEPARATOR . 'model');
 		self::registerAutoload();
 		
-		if (AtomCode::$config['session']['mode'] == 'db') {
+		if (self::$config['session']['mode'] == 'db') {
 			self::$session = new Session();
 			self::assocSession();
 		}
 		
 		if (defined('STDIN')) {
-			AtomCode::$route = new RouteCli();
+			self::$route = new RouteCli();
 		} else {
-			AtomCode::$route = new RouteUrl();
+			self::$route = new RouteUrl();
 		}
-		
-		$controller_file = APP_PATH . '/controller/' . AtomCode::$route->getControllerFile();
-		if (file_exists($controller_file))
-			include $controller_file;
-		
-		$controller_class = AtomCode::$route->getControllerClass();
-		if (!class_exists($controller_class, false)) {
+
+		$controller_class = self::$route->getControllerClass();
+
+		if (!class_exists($controller_class, true)) {
 			exit("Controller: $controller_class does not exist");
 		}
-		
-		if (get_magic_quotes_gpc()) {
-			$_GET = rstripslashes($_GET);
-			$_POST = rstripslashes($_POST);
-			$_COOKIE = rstripslashes($_COOKIE);
-			$_REQUEST = rstripslashes($_REQUEST);
-		}
-		
+
 		// why place the allow origin here? controller class may crash when running.
-		if (AtomCode::$config['view']['ajax-origen'] && $_SERVER['HTTP_ORIGIN'] && preg_match(AtomCode::$config['view']['ajax-origen'], $_SERVER['HTTP_ORIGIN'])) {
+		if (self::$config['view']['ajax-origen'] && $_SERVER['HTTP_ORIGIN'] && preg_match(self::$config['view']['ajax-origen'], $_SERVER['HTTP_ORIGIN'])) {
 			header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
 		}
 		
 		$controller = new $controller_class();
 		$controller->config = &self::$config;
-		$action_str = AtomCode::$route->getAction();
+		$action_str = self::$route->getAction();
 		
 		$src_action = $action_str;
 		$action_str = $controller->_resolve($action_str);
 		
-		AtomCode::$route->setAction($action_str);
-		$action = AtomCode::$route->getActionName();
+		self::$route->setAction($action_str);
+		$action = self::$route->getActionName();
 		
 		if (!method_exists($controller, $action)) {
 			exit("Action: $controller_class does not have method `$action_str`" . ($action == $src_action ? "" : ", origen action is $src_action"));
@@ -89,7 +79,7 @@ class AtomCode {
 		if (!$controller->isDisabledRender()) {
 			$view = $controller->getView();
 			if (!$view) {
-				$view = AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . DIRECTORY_SEPARATOR . AtomCode::$route->getAction();
+				$view = self::$route->getController() . DIRECTORY_SEPARATOR . self::$route->getAction();
 			}
 			
 			$render = $controller->getRender();
@@ -166,7 +156,7 @@ class AtomCode {
 
 function __atomcode_autoload($class) {
 	$class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
-	
+
 	include $class . '.php';
 }
 abstract class Route {
@@ -182,58 +172,69 @@ abstract class Route {
 	protected $path = "";
 
 	public function __construct() {
-		$this->config = AtomCode::$config['route'];
+		$this->config = AtomCode::addConfig('route');
 		
-		$this->module = $this->config['default_module'];
 		$this->controller = $this->config['default_controller'];
 		$this->action = $this->config['default_action'];
 	}
 
 	protected function parsePath($path) {
-		$path = trim($path, ' /');
-		$this->path = $path;
-		$ps = explode('/', $path);
-		
+		$this->path = $this->resolve($path);
+        $path = $this->path;
+
 		if ($path) {
-			if (file_exists(APP_PATH . '/controller/' . $path)) {
-				$this->module = $path;
-			} elseif (count($ps) > 1 && file_exists(APP_PATH . '/controller/' . dirname($path))) {
-				$this->module = dirname($path);
-				$this->controller = array_pop($ps);
-			} elseif (count($ps) > 2 && file_exists(APP_PATH . '/controller/' . dirname(dirname($path)))) {
-				$this->module = dirname(dirname($path));
-				$this->action = array_pop($ps);
-				$this->controller = array_pop($ps);
-			} elseif (count($ps) <= 2) {
-				if ($ps[0]) $this->controller = $ps[0];
-				if ($ps[1]) $this->action = $ps[1];
-			}
+		    $long_route = $path . '/' . $this->config['default_controller'];
+		    $long_class = $this->getControllerClass($long_route);
+		    $long_path = $this->getControllerFile($long_class);
+		    if ($this->config['default_controller'] && file_exists($long_path)) {
+		        $this->controller = $long_route;
+		        return ;
+            }
+
+		    $ps = explode('/', $path);
+
+		    if (count($ps) == 1 || file_exists($this->getControllerFile($this->getControllerClass($path)))) {
+		        $this->controller = $path;
+            } elseif ($path2 = dirname($path)) {
+                $this->controller = $path2;
+                $this->action = substr($path, strlen($path2) + 1);
+            }
 		}
 	}
 
-	public function getModule() {
-		return $this->module;
-	}
+    /**
+     * @param $path 解析此 URL
+     * @return string 最终 url
+     */
+    public function resolve($path) {
+        $path = trim($path, ' /');
+        if (strpos($path, '..') !== false) exit("DANGER!");
 
-	public function getModuleDir() {
-		return $this->module ? $this->module . DIRECTORY_SEPARATOR : "";
+        if (is_array($this->config['replace']))foreach ($this->config['replace'] as $reg => $replace) {
+            $path = preg_replace('/^' . $reg . '$/', $replace, $path);
+        }
+
+        return $path;
 	}
 
 	public function getController() {
 		return $this->controller;
 	}
 
-	public function getAction() {
-		return $this->action;
+	public function getControllerClass($name = '') {
+        $ps = explode("/", $name ?: $this->controller);
+        $class = array_pop($ps);
+        $dir = $ps ? implode("\\", $ps) . '\\' : '';
+		return 'controller\\' . $dir .  str_replace(' ','', ucwords(str_replace(array('-', '_'), ' ', $class))) . 'Controller';
 	}
 
-	public function getControllerClass() {
-		return str_replace(" ", '', ucwords(str_replace(array('-', '_'), ' ', $this->controller))) . 'Controller';
+    public function getControllerFile($class) {
+        return APP_PATH . '/' . str_replace('\\', '/', $class) . '.php';
 	}
 
-	public function getControllerFile() {
-		return $this->getModuleDir() . $this->getControllerClass() . '.php';
-	}
+    public function getAction() {
+        return $this->action;
+    }
 
 	public function getActionName() {
 		return str_replace(" ", '', ucwords(str_replace(array('-', '_'), ' ', $this->action))). 'Action';

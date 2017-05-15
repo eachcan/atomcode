@@ -1,53 +1,57 @@
-Atomcode PHP 开发框架
+AtomCode
 ========
-这个框架一个新的版本完成了。之前也有一个同名的框架，也是我做的，但是规则仍然太复杂。所以重新做一个。
+欢迎使用 AtomCode，这是一个适合中小型项目的框架。
 
-为什么要做这个框架呢？
---------
-我感觉大部分框架的规则都太多了。这个非常少。你要能接受就接受，不能接受这么简单，那还是要使用别的框架得了。
+安装
+---
+1. 通过 composer 安装
+```shell
+composer require "atomcode/atomcode"
+```
 
-这个框架都有什么规则呢？
---------
-
-1. URL规则仅支持一种，就是 `/user/login` 这一种，别无选择。当然，你非要写成 `index.php?_url=user/login` 也可以。。
-2. 配置是全局的，你在任意地方都可以使用配置文件里的值。甚至修改都可以，没有任何限制
-3. 仅包含 `MVC` 结构。`M` 映射数据库，实现了一般的简单的 `ORM`，支持有限，但也足够灵活；`V` 就是页面文件，里面直接写 `HTML + PHP`，但不要在里面做超出 `View` 角色该有的功能即可；`C` 不用说了，就是处理一下用户输入，然后处理出结果后，输出给 View 来显示。
-4. 支持命令行模式，在程序里的 `$_GET` 可以捕获命令行的参数
-5. 有一个叫 Render 的概念，也就是说你的程序可以有不同的格式输出。默认情况下： 网页访问自动使用 `HtmlRender` 输出，加载与 `controller` 同名的 `view`； Ajax 请求会使用 JsonRender； 命令行会使用 YamlRender。这些 Render 会按照自己的输出格式来处理 `Controller` 处理出来的值。你在 controller 里，有机会自己指定使用哪种 Render
-
-这个框架的功能
---------
-1. 支持网页访问、用于Ajax请求的Json输出、命令行调用
-1. 仅支持MySQL数据库
-1. 支持Ajax的跨域调用，但是需要提前在配置中配置规则
-1. 支持将SESSION存到数据库
-1. 支持ORM方式进行访问数据库
-1. 支持类自动加载（注意：并不支持`namespace`）
-1. 支持配置加载
-1. 可自动加载外部类
-
-未来希望会增加一些更多的内容，但是如果破坏了简单的原则，我们可能只能自己加载独立类来实现了。
+2. 直接下载最新安装包，参考下方的目录结构
 
 ### 目录结构
 
 总共需要有三套目录： 框架的目录， 你自己的程序目录，你的入口文件和图片之前Web资源目录。分别如下：
 
-	| atomcode
-	
+	| atomcode  # 框架放这里, 如果是 composer 安装则不需要此目录
+	| vendor    # 这是 composer 的目录，如果是下载安装则没有此目录
 	| app		# 这个名字无所谓
-	
-	| public	# 这个名字更无所谓，但是 Web 服务器一定要访问到
+	| public	# 这个名字更无所谓，作为 Web 服务器的根目录
 
 atomcode 目录你不需要关心，只需要找个地方放就行了。
 
 app 目录结构：
+```shell
+|- config
+  |- config.php
+|- controller
+|- model
+|- view
+```
 
-	|- config
-	  |- config.php
-	|- controller
-	|- model
-	|- view
+public 目录下，需要放置一个入口文件，内容类似于:
+```PHP
+<?php
+require '../vendor/autoload.php'; # composer 安装模式
+// require '../atomcode/src/Core.php'; # 下载安装模式
 
+define('WWW_PATH', __DIR__);
+define('APP_PATH', realpath(__DIR__ . "/../app")); # 必须定义这一常量
+define('CURRENT_TIME', time());
+
+if (file_exists(WWW_PATH . '/../../.dev')) {
+    define('ENVIRONMENT', 'dev'); # 不定义此常量，将认为是线上环境
+    error_reporting(E_ALL & ~E_NOTICE);
+}
+
+chdir(WWW_PATH);
+date_default_timezone_set("asia/shanghai"); # 这些基础设置，请在入口文件里都设置了
+
+// AtomCode::registerAutoloadDir("/data/lib/php/phpword"); 注册自动加载要寻找的目录
+AtomCode::start();
+```
 
 ### 快速体验
 
@@ -60,6 +64,6 @@ class IndexController extends Controller {
 	}
 }
 ```
-OK, 开始访问吧：
+开始访问：
 
 http://example.com/index.php?_url=index/index

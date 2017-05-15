@@ -1,5 +1,4 @@
 <?php
-
 class Json {
 
 	private static $pos = 0;

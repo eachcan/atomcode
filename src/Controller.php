@@ -69,6 +69,10 @@ abstract class Controller {
 	}
 	
 	public function redirect($action) {
+	    $will_replace = strpos(AtomCode::$config['route']['base'], '?') !== false;
+	    if ($will_replace) {
+	        $action = str_replace('?', '&', $action);
+        }
 		header('location: ' . rtrim(AtomCode::$config['route']['base'], ' /') . '/' . ltrim($action, '/ '));
 	}
 }
