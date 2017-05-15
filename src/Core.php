@@ -26,6 +26,8 @@ class AtomCode {
 		if (isset($_REQUEST['GLOBALS']) or isset($_FILES['GLOBALS'])) {
 			exit('Request tainting attempted.');
 		}
+
+        AtomCode::registerAutoloadDir(APP_PATH);
 		
 		self::addConfig("config", false);
 		foreach (self::$auto_load_config as $file) {
@@ -50,14 +52,7 @@ class AtomCode {
 		if (!class_exists($controller_class, true)) {
 			exit("Controller: $controller_class does not exist");
 		}
-		
-		if (get_magic_quotes_gpc()) {
-			$_GET = rstripslashes($_GET);
-			$_POST = rstripslashes($_POST);
-			$_COOKIE = rstripslashes($_COOKIE);
-			$_REQUEST = rstripslashes($_REQUEST);
-		}
-		
+
 		// why place the allow origin here? controller class may crash when running.
 		if (self::$config['view']['ajax-origen'] && $_SERVER['HTTP_ORIGIN'] && preg_match(self::$config['view']['ajax-origen'], $_SERVER['HTTP_ORIGIN'])) {
 			header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
