@@ -11,6 +11,8 @@ composer require "atomcode/atomcode"
 
 2. 直接下载最新安装包，参考下方的目录结构
 
+https://github.com/eachcan/atomcode/releases
+
 ### 目录结构
 
 总共需要有三套目录： 框架的目录， 你自己的程序目录，你的入口文件和图片之前Web资源目录。分别如下：
