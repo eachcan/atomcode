@@ -28,7 +28,7 @@ function log_err($msg = '', $tag = '') {
 			touch($file);
 			chmod($file, 0777);
 		}
-		file_put_contents($file, '[' . date("Y-m-d H:i:s") . '] [' . AtomCode::$route->getModuleDir() . AtomCode::$route->getController() . '->' . AtomCode::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
+		file_put_contents($file, '[' . date("Y-m-d H:i:s") . '] [' . AtomCode::$route->getController() . '->' . AtomCode::$route->getAction() . "] " . $msg . "\r\n", FILE_APPEND);
 	}
 }
 

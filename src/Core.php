@@ -172,9 +172,11 @@ abstract class Route {
 	protected $path = "";
 
 	public function __construct() {
-		$this->config = AtomCode::addConfig('route');
-		
-		$this->controller = $this->config['default_controller'];
+		AtomCode::addConfig('route');
+
+        $this->config = AtomCode::$config['route'];
+
+        $this->controller = $this->config['default_controller'];
 		$this->action = $this->config['default_action'];
 	}
 
