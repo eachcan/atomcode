@@ -1,5 +1,5 @@
 <?php
-abstract class Model implements ArrayAccess {
+abstract class Model implements \ArrayAccess {
 	/**
 	 * @var Criteria
 	 */
