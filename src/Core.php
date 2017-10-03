@@ -22,7 +22,7 @@ class AtomCode {
 			error_reporting(0);
 			ini_set("display_errors", 0);
 		}
-		
+
 		if (isset($_REQUEST['GLOBALS']) or isset($_FILES['GLOBALS'])) {
 			exit('Request tainting attempted.');
 		}

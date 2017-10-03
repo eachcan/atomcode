@@ -111,7 +111,6 @@ class Database {
 		if (!$stmt->execute()) {
 			log_err("fail sql: " . $stmt->queryString);
 			$error = $stmt->errorInfo();
-            var_dump($error);
 			$this->messages[] = "query error: " . print_r($error, true);
 			log_err("query error: " . print_r($error, true));
 			return false;
