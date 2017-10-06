@@ -13,4 +13,5 @@ class Criteria {
 	public $limit = '';
 	public $counter = 0;
 	public $found_rows = false;
+	public $for_update = false;
 }

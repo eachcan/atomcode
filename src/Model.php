@@ -376,7 +376,7 @@ abstract class Model implements \ArrayAccess {
 	public function buildSelectSql() {
 		return $this->partSelectSql() . $this->partFromSql() . $this->partJoinSql()
 		 . $this->partWhereSql() . $this->partGroupSql() . $this->partHavingSql()
-		 . $this->partOrderSql() . $this->partLimitSql();
+		 . $this->partOrderSql() . $this->partLimitSql() . $this->partForUpdateSql();
 	}
 	
 	public function buildInsertSelectSql($cols = '*') {
@@ -529,6 +529,14 @@ abstract class Model implements \ArrayAccess {
 			return '';
 		}
 	}
+
+    private function partForUpdateSql() {
+	    if ($this->_criteria->for_update) {
+	        return ' For UPDATE';
+        } else {
+	        return '';
+        }
+	}
 	
 	private function partUpdateSql($data) {
 		$items = array();
@@ -673,5 +681,10 @@ abstract class Model implements \ArrayAccess {
 	 */
 	public function rollback() {
 		return $this->_db->rollback();
+	}
+
+    public function forUpate($set = true)
+    {
+        $this->_criteria->for_update = $set ? true : false;
 	}
 }
