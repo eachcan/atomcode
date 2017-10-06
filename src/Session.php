@@ -3,7 +3,9 @@ class Session {
 	private static $exists = false;
 	
 	private static $user_id = 0;
-	
+
+	const DEFAULT_LIFETIME = 86400 * 2;
+
 	public function __construct() {
 		session_name(AtomCode::$config['session']['key']);
 		$id = $_POST[AtomCode::$config['session']['key']];
@@ -38,7 +40,10 @@ class Session {
 		$sql = "SELECT * FROM sessions WHERE session_id = :id";
 		$results = $db->queryArray($sql, array('id' => $session_id));
 		if ($results) {
-			if ($results[0]['last_activity'] > time() - 86400 * 2) {
+		    $life_time = AtomCode::$config['session']['lifetime'];
+		    if (!$life_time) $life_time = self::DEFAULT_LIFETIME;
+
+			if ($results[0]['last_activity'] > time() - $life_time) {
 				$session = $results[0]['user_data'];
 				self::$exists = true;
 			} else {
@@ -78,7 +83,11 @@ class Session {
 	public function gc($lifetime) {
 		$sql = "DELETE FROM sessions WHERE last_activity < :time";
 		$db = Database::get(AtomCode::$config['session']['db']);
-		$db->query($sql, array('time' => time() - 86400 * 2));
+
+        $life_time = AtomCode::$config['session']['lifetime'];
+        if (!$life_time) $life_time = self::DEFAULT_LIFETIME;
+
+		$db->query($sql, array('time' => time() - $life_time));
 		return true;
 	}
 

@@ -3,7 +3,12 @@ class View {
 
 	public static function render($render, $view, $data) {
 		$t = null;
-		$class = ucfirst($render) . "Render";
+		if (AtomCode::$config['view']['render_alias'][$render]) {
+            $class = AtomCode::$config['view']['render_alias'][$render];
+        } else {
+            $class = ucfirst($render) . "Render";
+        }
+
 		if (class_exists($class)) {
 			$t = new $class();
 		}

@@ -7,6 +7,9 @@ class AtomCode {
 
 	public static $config = array();
 
+    /**
+     * @var Session
+     */
 	public static $session;
 
 	public static $auto_load_config = array();
@@ -100,10 +103,11 @@ class AtomCode {
 		} elseif ($file{0} == '.') {
 			include APP_PATH . '/' . $file;
 		} else {
-			if (file_exists(APP_PATH . '/config/' . $dir . $file . '.php')) {
+            if (file_exists(APP_PATH . '/config/' . $file . '.php')) {
+                include APP_PATH . '/config/' . $file . '.php';
+            }
+			if ($dir && file_exists(APP_PATH . '/config/' . $dir . $file . '.php')) {
 				include APP_PATH . '/config/' . $dir . $file . '.php';
-			} else {
-				include APP_PATH . '/config/' . $file . '.php';
 			}
 		}
 		
@@ -133,6 +137,9 @@ class AtomCode {
 	}
 
 	public static function decideRender() {
+	    if (AtomCode::$config['view']['renderer'] && is_callable(AtomCode::$config['view']['renderer'])) {
+	        return call_user_func(AtomCode::$config['view']['renderer']);
+        }
 		if (is_cli()) {
 			return 'yaml';
 		} elseif (is_ajax()) {
