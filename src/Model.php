@@ -30,6 +30,10 @@ abstract class Model implements \ArrayAccess {
 
 		$this->reset();
 	}
+
+    public function rules() {
+	    return [];
+    }
 	
 	public function getCriteria() {
 		return clone $this->_criteria;
