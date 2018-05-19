@@ -4,7 +4,7 @@ class Session {
 	
 	private static $user_id = 0;
 
-	const DEFAULT_LIFETIME = 86400 * 2;
+	const DEFAULT_LIFETIME = 86400;
 
 	public function __construct() {
 		session_name(AtomCode::$config['session']['key']);

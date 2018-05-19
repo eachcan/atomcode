@@ -181,7 +181,12 @@ abstract class Model implements \ArrayAccess {
 		$this->reset();
 		return $result;
 	}
-	
+
+    /**
+     * 查询出一个来
+     * @param bool $wrap
+     * @return static
+     */
 	public function findOne($wrap = false) {
 		$this->limit(1);
 		$result = $this->find();
@@ -253,7 +258,11 @@ abstract class Model implements \ArrayAccess {
 	public function outerJoin($table, $cond) {
 		$this->_criteria->join[] = array("OUTER", $table, $cond);
 	}
-	
+
+    /**
+     * @param $id
+     * @return static
+     */
 	public function get($id) {
 		$this->where($this->_primary . ' = :' . $this->_primary, array($this->_primary => $id));
 		$this->limit(1);
